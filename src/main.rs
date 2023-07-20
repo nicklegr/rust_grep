@@ -13,7 +13,7 @@ fn process_file(file_name: &str) -> io::Result<Vec<MatchLine>> {
     let content = fs::read_to_string(file_name)?;
 
     let match_lines: Vec<MatchLine> =
-        content.split("\n")
+        content.lines()
         .enumerate()
         .filter(|x| x.1.contains(".ts"))
         .map(|x| MatchLine { line_no: x.0 + 1, content: String::from(x.1) })
