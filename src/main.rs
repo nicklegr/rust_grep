@@ -10,10 +10,10 @@ fn process_file(file_name: &str) -> std::io::Result<Vec<String>> {
     let match_lines: Vec<&str> =
         content.split("\n")
         // .enumerate()
-        .filter(|&x| x.contains(".ts"))
+        .filter(|x| x.contains(".ts"))
         .collect();
 
-    for line in match_lines {
+    for line in &match_lines {
         println!("{}", line);
     }
 
