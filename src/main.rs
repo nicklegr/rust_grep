@@ -6,16 +6,16 @@ struct MatchLine {
 }
 
 fn main() -> io::Result<()> {
+    // iterator of Result<T, E> items can be collected into Result<Collection<T>, E>
     let entries = fs::read_dir("texts")?
-        .map(|e| e.map(|dir| dir.path()))
+        .map(|e| e.map(|dir| dir.path())) // e.map()はResultに対するmap
         .collect::<Result<Vec<PathBuf>, _>>()?;
 
     for file in &entries {
-        let file_name = file.file_name().unwrap().to_str().unwrap();
-        println!("{}", file_name);
+        // let file_name = file.file_name().unwrap().to_str().unwrap();
+        // println!("{}", file_name);
+        process_file(file.as_path().to_str().unwrap())?;
     }
-
-    // process_file("playlist.m3u8").unwrap();
 
     Ok(())
 }
@@ -26,12 +26,12 @@ fn process_file(file_name: &str) -> io::Result<Vec<MatchLine>> {
     let match_lines: Vec<MatchLine> =
         content.lines()
         .enumerate()
-        .filter(|x| x.1.contains(".ts"))
+        .filter(|x| x.1.contains("def "))
         .map(|x| MatchLine { line_no: x.0 + 1, content: String::from(x.1) })
         .collect();
 
     for line in &match_lines {
-        println!("{}: {}", line.line_no, line.content);
+        println!("{}:{}: {}", file_name, line.line_no, line.content);
     }
 
     Ok(match_lines)
