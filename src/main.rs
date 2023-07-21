@@ -11,6 +11,12 @@ fn main() -> io::Result<()> {
         .map(|e| e.map(|dir| dir.path())) // e.map()はResultに対するmap
         .collect::<Result<Vec<PathBuf>, _>>()?;
 
+    // read_dirのイテレート中のエラーを無視するならシンプルに書ける
+    // let entries: Vec<PathBuf> = fs::read_dir("texts")?
+    //     .filter_map(|e| e.ok())
+    //     .map(|e| e.path())
+    //     .collect();
+
     for file in &entries {
         // let file_name = file.file_name().unwrap().to_str().unwrap();
         // println!("{}", file_name);
