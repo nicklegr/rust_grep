@@ -1,4 +1,4 @@
-use std::{fs, io, path::PathBuf};
+use std::{fs, io, path};
 
 struct MatchLine {
     line_no: usize,
@@ -9,7 +9,7 @@ fn main() -> io::Result<()> {
     // iterator of Result<T, E> items can be collected into Result<Collection<T>, E>
     let entries = fs::read_dir("texts")?
         .map(|e| e.map(|dir| dir.path())) // e.map()はResultに対するmap
-        .collect::<Result<Vec<PathBuf>, _>>()?;
+        .collect::<Result<Vec<path::PathBuf>, _>>()?;
 
     // read_dirのイテレート中のエラーを無視するならシンプルに書ける
     // let entries: Vec<PathBuf> = fs::read_dir("texts")?
@@ -21,7 +21,7 @@ fn main() -> io::Result<()> {
         let file_name = file.file_name().unwrap().to_str().unwrap();
         // println!("{}", file_name);
 
-        let match_lines = process_file(file.as_path().to_str().unwrap())?;
+        let match_lines = process_file(file.as_path())?;
         for line in &match_lines {
             println!("{}:{}: {}", file_name, line.line_no, line.content);
         }
@@ -30,8 +30,8 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn process_file(file_name: &str) -> io::Result<Vec<MatchLine>> {
-    let content = fs::read_to_string(file_name)?;
+fn process_file(path: &path::Path) -> io::Result<Vec<MatchLine>> {
+    let content = fs::read_to_string(path)?;
 
     let match_lines: Vec<MatchLine> =
         content.lines()
