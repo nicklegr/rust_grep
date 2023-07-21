@@ -18,9 +18,13 @@ fn main() -> io::Result<()> {
     //     .collect();
 
     for file in &entries {
-        // let file_name = file.file_name().unwrap().to_str().unwrap();
+        let file_name = file.file_name().unwrap().to_str().unwrap();
         // println!("{}", file_name);
-        process_file(file.as_path().to_str().unwrap())?;
+
+        let match_lines = process_file(file.as_path().to_str().unwrap())?;
+        for line in &match_lines {
+            println!("{}:{}: {}", file_name, line.line_no, line.content);
+        }
     }
 
     Ok(())
@@ -35,10 +39,6 @@ fn process_file(file_name: &str) -> io::Result<Vec<MatchLine>> {
         .filter(|x| x.1.contains("def "))
         .map(|x| MatchLine { line_no: x.0 + 1, content: String::from(x.1) })
         .collect();
-
-    for line in &match_lines {
-        println!("{}:{}: {}", file_name, line.line_no, line.content);
-    }
 
     Ok(match_lines)
 }
