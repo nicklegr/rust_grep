@@ -1,12 +1,23 @@
-use std::{fs, io};
+use std::{fs, io, path::PathBuf};
 
 struct MatchLine {
     line_no: usize,
     content: String,
 }
 
-fn main() {
-    process_file("playlist.m3u8").unwrap();
+fn main() -> io::Result<()> {
+    let entries = fs::read_dir("texts")?
+        .map(|e| e.map(|dir| dir.path()))
+        .collect::<Result<Vec<PathBuf>, _>>()?;
+
+    for file in &entries {
+        let file_name = file.file_name().unwrap().to_str().unwrap();
+        println!("{}", file_name);
+    }
+
+    // process_file("playlist.m3u8").unwrap();
+
+    Ok(())
 }
 
 fn process_file(file_name: &str) -> io::Result<Vec<MatchLine>> {
