@@ -13,7 +13,7 @@ struct MatchLine {
 
 fn main() -> io::Result<()> {
     // iterator of Result<T, E> items can be collected into Result<Collection<T>, E>
-    let entries =
+    let paths =
         fs::read_dir("texts")?
         .map(|e| e.map(|dir| dir.path())) // e.map()はResultに対するmap
         .collect::<Result<Vec<path::PathBuf>, _>>()?;
@@ -28,15 +28,15 @@ fn main() -> io::Result<()> {
     let pool = ThreadPool::new(n_workers);
     let (sender, receiver) = mpsc::channel::<FileResult>();
 
-    // pathbufをborrowではなくmoveすればentriesの寿命が尽きても大丈夫
-    for pathbuf in entries {
+    // pathbufをborrowではなくmoveすればpathsの寿命が尽きても大丈夫
+    for pathbuf in paths {
         let sender = sender.clone();
         pool.execute(move || {
-            let file = pathbuf;
-            let file_name = file.file_name().unwrap().to_str().unwrap();
+            let path = pathbuf;
+            let file_name = path.file_name().unwrap().to_str().unwrap();
             // println!("{}", file_name);
 
-            let match_lines = process_file(&file).unwrap();
+            let match_lines = process_file(&path).unwrap();
             let result = FileResult { file_name: file_name.to_string(), match_lines };
             sender.send(result).unwrap();
         });
