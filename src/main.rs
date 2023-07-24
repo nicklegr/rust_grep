@@ -1,4 +1,5 @@
-use std::{fs, io, path};
+use std::{fs, io, path, sync::mpsc};
+use threadpool::ThreadPool;
 
 struct MatchLine {
     line_no: usize,
@@ -7,7 +8,8 @@ struct MatchLine {
 
 fn main() -> io::Result<()> {
     // iterator of Result<T, E> items can be collected into Result<Collection<T>, E>
-    let entries = fs::read_dir("texts")?
+    let entries =
+        fs::read_dir("texts")?
         .map(|e| e.map(|dir| dir.path())) // e.map()はResultに対するmap
         .collect::<Result<Vec<path::PathBuf>, _>>()?;
 
@@ -17,15 +19,28 @@ fn main() -> io::Result<()> {
     //     .map(|e| e.path())
     //     .collect();
 
-    for file in &entries {
-        let file_name = file.file_name().unwrap().to_str().unwrap();
-        // println!("{}", file_name);
+    let n_workers = 4;
+    let pool = ThreadPool::new(n_workers);
+    let (sender, receiver) = mpsc::channel::<path::PathBuf>();
 
-        let match_lines = process_file(file.as_path())?;
-        for line in &match_lines {
-            println!("{}:{}: {}", file_name, line.line_no, line.content);
-        }
+    for pathbuf in &entries {
+        sender.send(pathbuf.clone()).unwrap();
     }
+    drop(sender);
+
+    pool.execute(move || {
+        while let Ok(file) = receiver.recv() {
+            let file_name = file.file_name().unwrap().to_str().unwrap();
+            // println!("{}", file_name);
+
+            let match_lines = process_file(&file).unwrap();
+            for line in &match_lines {
+                println!("{}:{}: {}", file_name, line.line_no, line.content);
+            }
+        }
+    });
+
+    pool.join();
 
     Ok(())
 }
