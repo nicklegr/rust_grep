@@ -23,8 +23,8 @@ fn main() -> io::Result<()> {
     let pool = ThreadPool::new(n_workers);
     let (sender, receiver) = mpsc::channel::<path::PathBuf>();
 
-    for pathbuf in &entries {
-        sender.send(pathbuf.clone()).unwrap();
+    for pathbuf in entries {
+        sender.send(pathbuf).unwrap();
     }
     drop(sender);
 
