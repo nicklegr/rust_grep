@@ -1,6 +1,11 @@
 use std::{fs, io, path, sync::mpsc};
 use threadpool::ThreadPool;
 
+struct FileResult {
+    file_name: String,
+    match_lines: Vec<MatchLine>,
+}
+
 struct MatchLine {
     line_no: usize,
     content: String,
@@ -21,26 +26,30 @@ fn main() -> io::Result<()> {
 
     let n_workers = 4;
     let pool = ThreadPool::new(n_workers);
-    let (sender, receiver) = mpsc::channel::<path::PathBuf>();
+    let (sender, receiver) = mpsc::channel::<FileResult>();
 
+    // pathbufをborrowではなくmoveすればentriesの寿命が尽きても大丈夫
     for pathbuf in entries {
-        sender.send(pathbuf).unwrap();
-    }
-    drop(sender);
-
-    pool.execute(move || {
-        while let Ok(file) = receiver.recv() {
+        let sender = sender.clone();
+        pool.execute(move || {
+            let file = pathbuf;
             let file_name = file.file_name().unwrap().to_str().unwrap();
             // println!("{}", file_name);
 
             let match_lines = process_file(&file).unwrap();
-            for line in &match_lines {
-                println!("{}:{}: {}", file_name, line.line_no, line.content);
-            }
-        }
-    });
+            let result = FileResult { file_name: file_name.to_string(), match_lines };
+            sender.send(result).unwrap();
+        });
+    }
+    drop(sender);
 
     pool.join();
+
+    while let Ok(file_result) = receiver.recv() {
+        for line in file_result.match_lines {
+            println!("{}:{}: {}", file_result.file_name, line.line_no, line.content);
+        }
+    }
 
     Ok(())
 }
