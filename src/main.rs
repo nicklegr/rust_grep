@@ -24,6 +24,10 @@ fn main() -> io::Result<()> {
     //     .map(|e| e.path())
     //     .collect();
 
+    process_files(paths)
+}
+
+fn process_files(paths: Vec<path::PathBuf>) -> io::Result<()> {
     let n_workers = 4;
     let pool = ThreadPool::new(n_workers);
     let (sender, receiver) = mpsc::channel::<FileResult>();
